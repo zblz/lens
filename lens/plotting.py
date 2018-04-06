@@ -8,12 +8,12 @@ import plotly.figure_factory as pff
 DEFAULT_COLORSCALE = 'Viridis'
 
 
-def plot_distribution(ls, column, bins=None):
+def plot_distribution(ls, column):
     """Plot the distribution of numerical columns.
 
     Create a plotly plot with a histogram of the values in a column. The
-    number of bin in the histogram is decided according to the
-    Freedman-Diaconis rule unless given by the `bins` parameter.
+    number of bins in the histogram is decided according to the
+    Freedman-Diaconis rule.
 
     Parameters
     ----------
@@ -21,29 +21,13 @@ def plot_distribution(ls, column, bins=None):
         Lens `Summary`.
     column : str
         Name of the column.
-    bins : int, optional
-        Number of bins to use for histogram. If not given, the
-        Freedman-Diaconis rule will be used to estimate the best number of
-        bins. This argument also accepts the formats taken by the `bins`
-        parameter of matplotlib's :function:`~matplotlib.pyplot.hist`.
 
     Returns
     -------
     :class:`~matplotlib.Axes`
         Matplotlib axes containing the distribution plot.
     """
-    column_summary = ls.summary(column)
-    if column_summary['notnulls'] <= 2:
-        # Plotly refuses to plot histograms if
-        # the tdigest has too few values
-        raise ValueError(
-            'There are fewer than two non-null values in this column')
-
-    if bins is None:
-        counts, edges = ls.histogram(column)
-    else:
-        xs, counts = ls.tdigest_centroids(column)
-        counts, edges = np.histogram(xs, weights=counts, bins=bins)
+    counts, edges = ls.histogram(column)
 
     fig, ax = plt.subplots()
 
@@ -179,7 +163,7 @@ def plot_correlation_mpl(ls, include=None, exclude=None):
     return fig
 
 
-def plot_cdf(ls, column, N_cdf=100):
+def plot_cdf(ls, column):
     """Plot the empirical cumulative distribution function of a column.
 
     Creates a plotly plot with the empirical CDF of a column.
@@ -190,18 +174,19 @@ def plot_cdf(ls, column, N_cdf=100):
         Lens `Summary`.
     column : str
         Name of the column.
-    N_cdf : int
-        Number of points in the CDF plot.
 
     Returns
     -------
     :class:`~matplotlib.Axes`
         Matplotlib axes containing the distribution plot.
     """
-    tdigest = ls.tdigest(column)
+    counts, xs = ls.histogram(column)
 
-    cdfs = np.linspace(0, 100, N_cdf)
-    xs = [tdigest.percentile(p) for p in cdfs]
+    cum_counts = np.cumsum(counts)
+    cdfs = 100 * cum_counts / cum_counts.max()
+    # The CDF values from histogram bins correspond to the right edge of the
+    # bin, so we need to add the left edge value for the first bin
+    cdfs = np.hstack(([0.], cdfs))
 
     fig, ax = plt.subplots()
 
