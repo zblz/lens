@@ -57,8 +57,6 @@ class Explorer(object):
     to explore the summary though tables and plots. It is best used from within
     a Jupyter notebook.
     """
-    # Number of points to show in the CDF plot
-    _N_cdf = 1000
 
     def __init__(self, summary, plot_renderer=_render):
         if not isinstance(summary, Summary):
@@ -172,7 +170,7 @@ class Explorer(object):
         """
         raise NotImplementedError
 
-    def distribution_plot(self, column, bins=None):
+    def distribution_plot(self, column):
         """Plot the distribution of a numeric column.
 
         Create a plotly plot with a histogram of the values in a column. The
@@ -183,13 +181,8 @@ class Explorer(object):
         ----------
         column : str
             Name of the column.
-        bins : int, optional
-            Number of bins to use for histogram. If not given, the
-            Freedman-Diaconis rule will be used to estimate the best number of
-            bins. This argument also accepts the formats taken by the `bins`
-            parameter of matplotlib's :function:`~matplotlib.pyplot.hist`.
         """
-        ax = plot_distribution(self.summary, column, bins)
+        ax = plot_distribution(self.summary, column)
         self.plot_renderer(ax)
 
     def cdf_plot(self, column):
@@ -202,7 +195,7 @@ class Explorer(object):
         column : str
             Name of the column.
         """
-        ax = plot_cdf(self.summary, column, self._N_cdf)
+        ax = plot_cdf(self.summary, column)
         self.plot_renderer(ax)
 
     def crosstab(self, column1, column2):
