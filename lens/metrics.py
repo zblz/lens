@@ -6,7 +6,6 @@ import logging
 import time
 from functools import wraps
 
-from tdigest import TDigest
 import numpy as np
 from scipy import stats
 from scipy import signal
@@ -119,120 +118,6 @@ def column_properties(series):
     return {name: colresult, '_columns': [name]}
 
 
-def _tdigest_mean(digest):
-    """TODO
-
-    Parameters
-    ----------
-    digest : tdigest.TDigest
-        t-digest data structure.
-
-    Returns
-    -------
-    TODO
-    """
-    means = [c.mean for c in digest.C.values()]
-    counts = [c.count for c in digest.C.values()]
-    return np.average(means, weights=counts)
-
-
-def _tdigest_std(digest):
-    """TODO
-
-    Parameters
-    ----------
-    digest : tdigest.TDigest
-        t-digest data structure.
-
-    Returns
-    -------
-    TODO
-    """
-    mean = _tdigest_mean(digest)
-    sums = [(x.mean - mean)**2 * x.count for x in digest.C.values()]
-    return np.sqrt(np.sum(sums) / digest.n)
-
-
-def _tdigest_normalise(digest):
-    """TODO
-
-    Parameters
-    ----------
-    digest : tdigest.TDigest
-        t-digest data structure.
-
-    Returns
-    -------
-    TODO
-    """
-    m = _tdigest_mean(digest)
-    s = _tdigest_std(digest)
-    ndigest = TDigest()
-    for x in digest.C.values():
-        ndigest.update((x.mean - m) / s, x.count)
-    return ndigest
-
-
-def _tdigest_norm_kstest(digest):
-    """TODO
-
-    Parameters
-    ----------
-    digest : tdigest.TDigest
-        t-digest data structure.
-
-    Returns
-    -------
-    TODO
-    """
-    normdigest = _tdigest_normalise(digest)
-
-    x = np.linspace(-3, 3, 500)
-    dig_q = np.array([normdigest.cdf(xx) for xx in x])
-    norm_q = stats.norm.cdf(x)
-
-    D = np.max(np.abs(dig_q - norm_q))
-
-    if digest.n > 3000:
-        return D, stats.distributions.kstwobign.sf(D * np.sqrt(digest.n))
-    else:
-        return D, 2 * stats.distributions.ksone.sf(D, digest.n)
-
-
-def _test_logtrans(digest):
-    """
-    Test if t-digest distribution is more normal when log-transformed.
-
-    Test whether a log-transform improves normality of data with a
-    simplified Kolmogorov-Smirnov two-sided test (the location and scale
-    of the normal distribution are estimated from the median and
-    standard deviation of the data).
-
-    Parameters
-    ----------
-    digest : tdigest.TDigest
-        t-digest data structure.
-
-    Returns
-    -------
-    TODO
-    """
-    if digest.percentile(0) <= 0:
-        return False
-
-    logdigest = TDigest()
-    for c in digest.C.values():
-        logdigest.update(np.log(c.mean), c.count)
-
-    lKS, lp = _tdigest_norm_kstest(logdigest)
-    KS, p = _tdigest_norm_kstest(digest)
-    logger.debug('KSnorm: log: {:.2g}, {:.2g}; linear: {:.2g}, {:.2g}'.format(
-        lKS, lp, KS, p))
-
-    return ((lKS < KS) and (lp > p) and (lp > LOGNORMALITY_P_THRESH) and
-            (p < LOGNORMALITY_P_THRESH))
-
-
 @timeit
 def column_summary(series, column_props, delta=0.01):
     """Summarise a numeric column.
@@ -279,36 +164,8 @@ def column_summary(series, column_props, delta=0.01):
     colresult['iqr'] = (
         colresult['percentiles'][75] - colresult['percentiles'][25])
 
-    # Compute the t-digest.
-    logger.debug('column_summary - {} - creating TDigest...'.format(col))
-    digest = TDigest(delta)
-    digest.batch_update(data)
-
-    logger.debug('column_summary - {} - testing log trans...'.format(col))
-    try:
-        colresult['logtrans'] = bool(_test_logtrans(digest))
-    except Exception as e:
-        # Hard to pinpoint problems with the logtrans TDigest.
-        logger.warning('test_logtrans has failed for column `{}`: {}'
-                       .format(col, e))
-        colresult['logtrans'] = False
-
-    if colresult['logtrans']:
-        logdigest = TDigest()
-        for c in digest.C.values():
-            logdigest.update(np.log(c.mean), c.count)
-        colresult['logtrans_mean'] = _tdigest_mean(logdigest)
-        colresult['logtrans_std'] = _tdigest_std(logdigest)
-        colresult['logtrans_IQR'] = (
-            logdigest.percentile(75) - logdigest.percentile(25))
-
-    logger.debug('column_summary - {} - should {}be log-transformed'.format(
-        col, 'NOT ' if not colresult['logtrans'] else ''))
-
-    # Compress and store the t-digest.
-    digest.delta = delta
-    digest.compress()
-    colresult['tdigest'] = [(c.mean, c.count) for c in digest.C.values()]
+    # TODO: compute whether the column should be log-transformed
+    colresult['logtrans'] = False
 
     # Compute histogram
     logger.debug('column_summary - {} - computing histogram...'.format(col))

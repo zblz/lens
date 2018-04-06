@@ -10,7 +10,6 @@ import pandas as pd
 import scipy
 
 from .dask_graph import create_dask_graph
-from .tdigest_utils import tdigest_from_centroids
 from .utils import hierarchical_ordering
 from .version import __version__
 
@@ -505,110 +504,6 @@ class Summary(object):
             raise ValueError('{} is not a numeric column'.format(column))
 
         return [np.array(kde[key]) for key in ['x', 'y']]
-
-    def _tdigest_report(self, column):
-        """ Return the list of tdigest centroids and means from report
-        """
-        self._check_column_name(column)
-        try:
-            tdigest_list = self._report['column_summary'][column]['tdigest']
-        except KeyError:
-            raise ValueError('{} is not a numeric column'.format(column))
-        return tdigest_list
-
-    def tdigest_centroids(self, column):
-        """Get TDigest centroids and counts for column.
-
-        Parameters
-        ----------
-        column : str
-            Name of the column.
-
-        Returns
-        -------
-        :class:`numpy.array`
-            Means of the TDigest centroids.
-        :class:`numpy.array`
-            Counts for each of the TDigest centroids.
-        """
-
-        tdigest_list = self._tdigest_report(column)
-        xs, counts = zip(*tdigest_list)
-        return np.array(xs), np.array(counts)
-
-    def pdf(self, column):
-        """ Approximate pdf for `column`
-
-        This returns a function representing the pdf of a numeric column.
-
-        Examples
-        --------
-
-        >>> pdf = summary.pdf('chlorides')
-        >>> min_value = summary.details('chlorides')['min']
-        >>> max_value = summary.details('chlorides')['max']
-        >>> xs = np.linspace(min_value, max_value, 200)
-        >>> plt.plot(xs, pdf(xs))
-
-        Parameters
-        ----------
-
-        column : str
-            Name of the column.
-
-        Returns
-        -------
-        pdf: function
-            Function representing the pdf.
-        """
-        xs, counts = self.tdigest_centroids(column)
-        return scipy.interpolate.interp1d(xs, counts)
-
-    def tdigest(self, column):
-        """Return a TDigest object approximating the distribution of a column
-
-        Documentation for the TDigest class can be found at
-        https://github.com/CamDavidsonPilon/tdigest.
-
-        Parameters
-        ----------
-        column : str
-            Name of the column.
-
-        Returns
-        -------
-        :class:`tdigest.TDigest`
-            TDigest instance computed from the values of the column.
-        """
-        return tdigest_from_centroids(self._tdigest_report(column))
-
-    def cdf(self, column):
-        """ Approximate cdf for `column`
-
-        This returns a function representing the cdf of a numeric column.
-
-        Examples
-        --------
-
-        >>> cdf = summary.cdf('chlorides')
-        >>> min_value = summary.details('chlorides')['min']
-        >>> max_value = summary.details('chlorides')['max']
-        >>> xs = np.linspace(min_value, max_value, 200)
-        >>> plt.plot(xs, cdf(xs))
-
-        Parameters
-        ----------
-
-        column : str
-            Name of the column.
-
-        Returns
-        -------
-        cdf: function
-            Function representing the cdf.
-        """
-        tdigest = self.tdigest(column)
-        return tdigest.cdf
 
     def correlation_matrix(self, include=None, exclude=None):
         """ Correlation matrix for numeric columns

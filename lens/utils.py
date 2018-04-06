@@ -1,4 +1,4 @@
-"""Plotting utils, mostly adapted from seaborn for use with TDigests."""
+"""Plotting utils"""
 import numpy as np
 from scipy import stats
 from six import string_types
