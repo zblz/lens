@@ -35,47 +35,35 @@ def test_distribution_plot(artworks_df, artworks_summary):
 
 
 def test_distribution_plot_bins(artworks_df, artworks_summary):
-    Nbins = 13
+
+    counts, _ = artworks_summary.histogram('Height (cm)')
 
     def mock_render(fig):
         # check that this draws a histogram with Nbins bars
-        assert len(fig.axes[0].patches) == Nbins
+        assert len(fig.axes[0].patches) == len(counts)
 
     explorer = Explorer(artworks_summary, plot_renderer=mock_render)
-    explorer.distribution_plot('Height (cm)', bins=Nbins)
+    explorer.distribution_plot('Height (cm)')
 
 
 def test_cdf_plot(artworks_df, artworks_summary):
     column = 'Height (cm)'
     plt.cla()
 
+    counts, edges = artworks_summary.histogram(column)
+
     def mock_render(fig):
         ax = fig.axes[0]
         assert len(ax.lines) == 1
         line = ax.lines[0]
 
-        tdigest = artworks_summary.tdigest(column)
-        xs = [tdigest.percentile(p) for p in [0, 100]]
-
-        assert line.get_xdata()[0] == xs[0]
-        assert line.get_xdata()[-1] == xs[-1]
+        assert line.get_xdata()[0] == edges[0]
+        assert line.get_xdata()[-1] == edges[-1]
         assert line.get_ydata()[0] == 0
         assert line.get_ydata()[-1] == 100
 
     explorer = Explorer(artworks_summary, plot_renderer=mock_render)
     explorer.cdf_plot('Height (cm)')
-
-
-def test_cdf_plot_log_transformed(artworks_df, artworks_summary):
-    plt.cla()
-
-    def mock_render(fig):
-        ax = fig.axes[0]
-        assert len(ax.lines) == 1
-        assert ax.get_xaxis().get_scale() == 'log'
-
-    explorer = Explorer(artworks_summary, plot_renderer=mock_render)
-    explorer.cdf_plot('Width (cm)')
 
 
 def test_cdf_plot_non_numeric(artworks_summary):
