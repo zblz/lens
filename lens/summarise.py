@@ -7,7 +7,6 @@ import time
 
 import numpy as np
 import pandas as pd
-import scipy
 
 from .dask_graph import create_dask_graph
 from .utils import hierarchical_ordering
