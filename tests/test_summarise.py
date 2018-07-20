@@ -122,15 +122,6 @@ def test_dask_column_summary(df, column_summary):
         else:
             cs_report = cs_report[col]
 
-        # Test that only lognormal is set to log transform
-        # Only run this test if the column has enough valid
-        # values
-        if len(df.index) >= 50:
-            if col == 'lognormal':
-                assert cs_report['logtrans']
-            else:
-                assert not cs_report['logtrans']
-
         _percs = list(cs_report['percentiles'].keys())
         _percs.sort()
         cs_report_perc = [cs_report['percentiles'][p] for p in _percs]
