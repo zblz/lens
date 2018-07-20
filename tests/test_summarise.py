@@ -244,10 +244,8 @@ def test_dask_pairdensity(df, column_properties, column_summary, frequencies):
                 if (not cp[col1][col1]['is_categorical'] and
                         not cp[col2][col2]['is_categorical'] and
                         'poisson' not in col1 and 'poisson' not in col2):
-                    filename = '{}/{}_{}_{}_pd_diff.png'.format(
-                        test_results_dir, len(df.index), col1, col2)
                     mean_dev = compute_deviation_with_kde(
-                        df[[col1, col2]], pd, filename)
+                        df[[col1, col2]], pd)
                     assert mean_dev < 0.02
                 assert np.sum(pd[col1][col2]['density']) > 0, \
                     "Failed on columns {} - {}".format(col1, col2)

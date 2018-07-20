@@ -69,7 +69,7 @@ def _normalise_range(X):
     return X / np.max(X)
 
 
-def compute_deviation_with_kde(df, pd, filename):
+def compute_deviation_with_kde(df, pd, filename=None):
     """ Compute mean deviation of smoothed histogram with respect to KDE """
     columns = pd['_columns']
     pd = pd[columns[0]][columns[1]]
@@ -95,7 +95,7 @@ def compute_deviation_with_kde(df, pd, filename):
     I = np.sum((hist_pd > 1E-3) + (kde_pd > 1E-3)) / 2.0
     mean_dev = np.sum(np.abs(kde_pd - hist_pd)) / I
 
-    if mean_dev > 0.01:
+    if mean_dev > 0.01 and filename is not None:
         plot_pd_difference(hist_pd, kde_pd, filename)
 
     return mean_dev
