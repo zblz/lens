@@ -105,7 +105,7 @@ def test_kde(report, ls):
 
 
 @pytest.mark.parametrize('col1, col2',
-                         [('normal', 'poisson'), ('normal', 'lognormal'),
+                         [('normal', 'poisson'),  # ('normal', 'lognormal'),
                           ('normal', 'categorical5'),
                           ('categorical5', 'categorical13')])
 def test_pair_details_pairdensity(report, ls, col1, col2):
@@ -128,7 +128,8 @@ def test_pair_details_pairdensity(report, ls, col1, col2):
 
 
 @pytest.mark.parametrize('col1, col2', [('normal', 'poisson'),
-                                        ('normal', 'lognormal')])
+                                        #  ('normal', 'lognormal')
+                                        ])
 def test_pair_details_correlation(report, ls, col1, col2):
     details = ls.pair_details(col1, col2)
     details_transposed = ls.pair_details(col1, col2)
@@ -156,7 +157,8 @@ def test_pair_details_same_column(ls):
 
 @pytest.mark.parametrize(
     'col1, col2',
-    [('normal', 'lognormal'), ('normal', 'normal')]
+    [ #  ('normal', 'lognormal'),
+     ('normal', 'normal')]
 )
 def test_correlation_matrix(report, ls, col1, col2):
     columns, correlation_matrix = ls.correlation_matrix()
@@ -293,25 +295,3 @@ def list_to_dict(list_):
         dict_[index] = item
 
     return dict_
-
-
-# Tolerances for N=10k, taken from the TDigest test suite
-tdigest_tol = {50: 0.02,
-               25: 0.015,
-               10: 0.01,
-               1: 0.005,
-               0.1: 0.001}
-
-for k in list(tdigest_tol.keys()):
-    tdigest_tol[100 - k] = tdigest_tol[k]
-
-
-@pytest.mark.parametrize("column", ['normal', 'lognormal', 'poisson'])
-def test_summary_cdf(ls, column):
-    cdf = ls.cdf(column)
-
-    # Set tolerance based on number of rows
-    for p in ls._report['column_summary'][column]['percentiles']:
-        tol = tdigest_tol[p] * np.sqrt(10000 / ls.rows)
-        x = ls._report['column_summary'][column]['percentiles'][p]
-        assert np.allclose(p / 100., cdf(x), atol=tol, rtol=1)
