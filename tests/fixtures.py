@@ -3,7 +3,6 @@ import os
 import inspect
 import random
 import string
-from dask.multiprocessing import get as mpget
 
 from lens.dask_graph import create_dask_graph
 
@@ -27,7 +26,7 @@ def df(request):
     items = [
         ('normal', n1 + n2), ('normal2', n1 - n2),
         ('uniform', np.random.random(nrows)),
-        ('lognormal', stats.lognorm.rvs(5, scale=10, size=nrows)),
+        #  ('lognormal', stats.lognorm.rvs(5, scale=10, size=nrows)),
         ('poisson', poisson),
         ('categorical13', gen_poisson_distributed_categorical_data(13, nrows)),
         ('categorical5', gen_uniformly_distributed_categorical_data(5, nrows)),
@@ -125,6 +124,6 @@ def gen_datetimes(size):
 @pytest.fixture(scope='module')
 def report(df):
     # Get a dict report by not calling summarise
-    report = create_dask_graph(df).compute(get=mpget)
+    report = create_dask_graph(df).compute(scheduler='sync')
 
     return report
