@@ -9,6 +9,7 @@ from lens.dask_graph import create_dask_graph
 
 import numpy as np
 import pandas as pd
+import dask.dataframe as dd
 from scipy import stats
 import pytest
 
@@ -60,7 +61,7 @@ def df(request):
 
     df.to_csv(dirname + "/test_results/test_data.csv", index=False)
 
-    return df
+    return dd.from_pandas(df, npartitions=4)
 
 
 def gen_categoricalint_with_no_twos(nrows):
