@@ -86,15 +86,15 @@ def column_properties(series):
     name = series.name
     colresult = {}
     colresult["dtype"] = str(series.dtype)
-    nulls = series.isnull().sum()
+    nulls = series.isnull().sum().compute()
     colresult["nulls"] = int(nulls) if not np.isnan(nulls) else 0
     notnulls = series.dropna()
 
-    colresult["notnulls"] = len(notnulls.index)
+    colresult["notnulls"] = int(notnulls.index.size.compute())
     colresult["numeric"] = (
         series.dtype in [np.float64, np.int64] and colresult["notnulls"] > 0
     )
-    unique = notnulls.unique().size
+    unique = int(notnulls.unique().size.compute())
     colresult["unique"] = unique
     colresult["is_categorical"] = False
     if (
