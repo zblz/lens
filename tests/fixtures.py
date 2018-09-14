@@ -79,7 +79,7 @@ def gen_poisson_distributed_categorical_data(ncategories, size):
         np.random.poisson(ncategories / 2.0) for i in range(size)
     ]
     truncated_random_samples = [
-        max(min(0, sample), ncategories - 1) for sample in random_samples
+        min(max(0, sample), ncategories - 1) for sample in random_samples
     ]
     sampled_categories = [
         categories[sample] for sample in truncated_random_samples
@@ -92,13 +92,8 @@ def gen_uniformly_distributed_categorical_data(ncategories, size):
         str(i) + "".join(random.sample(string.ascii_letters, 4))
         for i in range(ncategories)
     ]
-    random_samples = np.random.randint(0, len(categories), size=size)
-    truncated_random_samples = [
-        max(min(0, sample), ncategories - 1) for sample in random_samples
-    ]
-    sampled_categories = [
-        categories[sample] for sample in truncated_random_samples
-    ]
+    random_samples = np.random.randint(0, ncategories, size=size)
+    sampled_categories = [categories[sample] for sample in random_samples]
     return sampled_categories
 
 
