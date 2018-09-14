@@ -213,13 +213,16 @@ def test_dask_outliers(df, column_summary):
 
 @pytest.fixture(scope="module")
 def frequencies(df, column_properties):
-    return {
-        col: dask.compute(metrics.frequencies(df[col], column_properties[col]))
-        for col in df.columns
-    }
+    [freqs] = dask.compute(
+        {
+            col: metrics.frequencies(df[col], column_properties[col])
+            for col in df.columns
+        }
+    )
+    return freqs
 
 
-def test_dask_frequencies(df, frequencies):
+def test_dask_frequencies(df, column_properties, frequencies):
     for col in frequencies.keys():
         freq_report = frequencies[col]
         if freq_report is None:
@@ -229,11 +232,13 @@ def test_dask_frequencies(df, frequencies):
 
         freqs = df[col].compute().value_counts().to_dict()
 
+        assert len(freq_report) == column_properties[col][col]["unique"]
+
         for k in freqs.keys():
             assert freqs[k] == freq_report[k]
 
     # test serialization
-    joined = _join_dask_results(frequencies.values())
+    joined = _join_dask_results(frequencies.values()).compute()
     json.dumps({"freqs": joined}, cls=NumpyEncoder)
 
 

@@ -474,7 +474,7 @@ def frequencies(series, column_props):
 
     if column_props[name]["is_categorical"]:
         logger.debug("frequencies - " + series.name)
-        freqs = _compute_frequencies(series.values)
+        freqs = _compute_frequencies(series.dropna().values)
         return {name: freqs, "_columns": [name]}
     else:
         return None
