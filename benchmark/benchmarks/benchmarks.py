@@ -8,7 +8,11 @@ from lens import metrics
 import lens.dask_graph
 import pandas as pd
 
-ROOT = Path(os.path.abspath(os.path.dirname(__file__)))
+ROOT = Path(os.getenv(
+    "ROOT", Path(os.path.abspath(os.path.dirname(__file__))) / "../.."
+))
+
+DATA_ROOT = ROOT / "tests" / "data"
 
 
 def _join_dask_results_nodelay(results):
@@ -66,7 +70,8 @@ class TimeSummarise:
 
         self.dataframes = {}
         for D in self.datasets:
-            df_path = ROOT / "../tests/data" / D
+            df_path = DATA_ROOT / D
+            print(df_path)
             self.dataframes[D] = pd.read_csv(df_path)
 
         def summarise(df, scheduler=self.sched, num_workers=self.num_workers):
@@ -136,7 +141,7 @@ class TimeMetrics:
         self.summarise_tasks = {}
 
         for D in self.datasets:
-            df_path = os.path.join(ROOT, "data", D)
+            df_path = DATA_ROOT / D
             df = pd.read_csv(df_path)
             self.dataframes[D] = df
             self.summarise_tasks[D] = SummariseTasks(df)
